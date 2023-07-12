@@ -1,5 +1,18 @@
 from chessprinting import *
 
+chesspieces = {"♚": {"Colour": "White", "Type": "King"}, 
+               "♔": {"Colour": "Black", "Type": "King"},
+               "♛": {"Colour": "White", "Type": "Queen"},
+               "♕": {"Colour": "Black", "Type": "Queen"},
+               "♝": {"Colour": "White", "Type": "Bishop"},
+               "♗": {"Colour": "Black", "Type": "Bishop"},
+               "♞": {"Colour": "White", "Type": "Knight"},
+               "♘": {"Colour": "Black", "Type": "Knight"},
+               "♜": {"Colour": "White", "Type": "Rook"},
+               "♖": {"Colour": "Black", "Type": "Rook"},
+               "♟︎": {"Colour": "White", "Type": "Pawn"},
+               "♙": {"Colour": "Black", "Type": "Pawn"}}
+
 def pieces():
     orboard=chessboard()
     cboard=chessboard()
@@ -20,7 +33,12 @@ def pieces():
     print_chessboard(cboard)
     return cboard
 
-def is_valid():
+def is_valid(originalpiece, turn):
+    if chesspieces[originalpiece]["Colour"] != turn:
+        return False
+    
+    
+    
     return True    
 
 def checkmate():
@@ -33,9 +51,11 @@ def chess_game():
     print("enter Qd1xd5, ie. the x between coordinates indicates capture.")
     cboard = pieces()
     orboard=chessboard()
-    turn = "white"
+    turn = "White"
+    turn_no = 1
     while not checkmate():
         while True:
+            print(f"It is currently turn {turn_no}, {turn} to move")
             Move = input("Please enter your move in the above format.")
             startrank = int(Move[2])
             startfile = Move[1]
@@ -46,11 +66,19 @@ def chess_game():
                 capturestate = True
             #piececheck = False
             #if ...
-            print(startrank, startfile, endrank, endfile, capturestate)
-            if is_valid():
+            #print(startrank, startfile, endrank, endfile, capturestate)
+            originalpiece = cboard[8-startrank][ord(startfile)-97]
+            if is_valid(originalpiece, turn):
+                print("Please enter a valid move.")
                 break
+        if turn == "White":
+            turn = "Black"
+        else:
+            turn = "White"
+        turn_no += 1
         #need to replace start position with original board square
-        originalpiece = cboard[8-startrank][ord(startfile)-97]
+        #originalpiece = cboard[8-startrank][ord(startfile)-97]
         cboard[8-startrank][ord(startfile)-97]=orboard[8-startrank][ord(startfile)-97]
         cboard[8-endrank][ord(endfile)-97]=originalpiece
+        print("The current state is below:")
         print_chessboard(cboard)
