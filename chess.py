@@ -26,9 +26,9 @@ def pieces():
     cboard[7][3]="♛"
     cboard[0][4]="♔"
     cboard[7][4]="♚"
-    for i in range (8):
+    for i in range (4):
         cboard[1][i]="♙"
-    for i in range (7):
+    for i in range (4):
         cboard[6][i]="♟︎"
     print_chessboard(cboard)
     return cboard
@@ -61,24 +61,30 @@ def knight_move(startcoord, endcoord):
 
 def rook_move(startcoord, endcoord, cboard):
     (ver_move,hor_move) = move_length(startcoord,endcoord)
-    #vertical movement, first down and then up
-    print(hor_move)
-    print(ver_move)
-    if hor_move == 0 and ver_move > 0:
+    #vertical movement, -i*int(ver_move/abs(ver_move)) determines direction of i depending
+    #on whether movement is up or down
+    if hor_move == 0:
         for i in range(1, abs(ver_move)):
-            #if all in between are empty, is valid
-            print((startcoord[0]-i,startcoord[1]))
-            if square_status((startcoord[0]-i,startcoord[1]), cboard) == True:
-            
-                print(f"{(startcoord[0]-i,startcoord[1])} is nonempty")
+            if bool(square_status((startcoord[0]-i*int(ver_move/abs(ver_move)),startcoord[1]), cboard)) == True:
+                #print(f"{(startcoord[0]-i*int(ver_move/abs(ver_move)),startcoord[1])} is nonempty")
                 return False
-            
+        #print("All empty")
+        return True
+    #horizontal similar to vertical
+    if ver_move == 0:
+        for i in range(1, abs(hor_move)):
+            #print((startcoord[0],startcoord[1]-i*int(hor_move/abs(hor_move))))
+            if bool(square_status((startcoord[0],startcoord[1]-i*int(hor_move/abs(hor_move))), cboard)) == True:
+                #print(f"{(startcoord[0],startcoord[1]-i*int(hor_move/abs(hor_move)))} is nonempty")
+                return False
+        #print("All empty")
+        return True
     else:
-        print("Not move")
+        #print("Not move")
         return False
-
-def is_valid(originalpiece, turn, startcoord, endcoord, 
-             capturestate, cboard, endsquare):
+    
+def is_valid(turn, startcoord, endcoord, 
+             capturestate, cboard):
     # Positions must be within [0:7]
     if ((startcoord[0] or startcoord[1] or endcoord[0] or endcoord[1]) > 7 or 
     (startcoord[0] or startcoord[1] or endcoord[0] or endcoord[1]) < 0):
@@ -88,7 +94,7 @@ def is_valid(originalpiece, turn, startcoord, endcoord,
     if square_status(startcoord, cboard) == False:
         return False
     # If the piece is not the correct colour, invalid move
-    if chesspieces[originalpiece]["Colour"] != turn:
+    if chesspieces[square_status(startcoord, cboard)]["Colour"] != turn:
         return False
     # If the end position is filled and no capture, invalid
     if (capturestate == False and 
@@ -99,15 +105,21 @@ def is_valid(originalpiece, turn, startcoord, endcoord,
         square_status(endcoord, cboard) == False):
         return False
     # If capturing a same colour piece, invalid
-    if (capturestate == True and chesspieces[endsquare]["Colour"] == turn):
+    if (capturestate == True and chesspieces[square_status(endcoord, cboard)]["Colour"] == turn):
         return False
+    # Need to consider move conditions under check
     print(startcoord)
     print(endcoord)
-    if chesspieces[originalpiece]["Type"] == "Knight":
+    if chesspieces[square_status(startcoord, cboard)]["Type"] == "Knight":
         return knight_move(startcoord, endcoord)
-    if chesspieces[originalpiece]["Type"] == "Rook":
+    #if chesspieces[square_status(startcoord, cboard)]["Type"] == "King":
+        #return king_move(startcoord, endcoord, cboard)
+    if chesspieces[square_status(startcoord, cboard)]["Type"] == "Rook":
         return rook_move(startcoord, endcoord, cboard)
     return True    
+
+def check():
+    return False
 
 def checkmate():
     return False   
@@ -116,7 +128,7 @@ def chess_game():
     print("Welcome to chess game!")
     print("Enter inputs in the following form: if white queen moves from")
     print("d1 to d5, enter Qd1d5. If it takes a piece while moving to d5,")
-    print("enter Qd1xd5, ie. the x between coordinates indicates capture.")
+    print("enter Qd1xd5, ie. the x indicates capture.")
     cboard = pieces()
     orboard=chessboard()
     turn = "White"
@@ -129,27 +141,32 @@ def chess_game():
             startfile = Move[1]
             endrank = int(Move[-1])
             endfile = Move[-2]
+            piecename = Move[0]
             startcoord = (8-startrank, ord(startfile)-97)
             endcoord = (8-endrank, ord(endfile)-97)
             capturestate = False
             if Move[-3]=="x":
                 capturestate = True
             #print(startrank, startfile, endrank, endfile, capturestate)
-            originalpiece = cboard[8-startrank][ord(startfile)-97]
             endsquare = cboard[8-endrank][ord(endfile)-97]
-            if is_valid(originalpiece, turn, startcoord, endcoord, 
-                        capturestate, cboard, endsquare):
+            if is_valid(turn, startcoord, endcoord, 
+                        capturestate, cboard):
                 break
             print("Please enter a valid move.")
+
+        #next (useless) block prints in words the move
+        print(f"{turn} {chesspieces[square_status(startcoord, cboard)]['Type']} moves from {startfile}{startrank} to {endfile}{endrank}")
         if turn == "White":
             turn = "Black"
         else:
             turn = "White"
+        if capturestate == True:
+            print(f"and takes {turn} {chesspieces[square_status(endcoord, cboard)]['Type']}")
         turn_no += 1
         #need to replace start position with original board square
-        #originalpiece = cboard[8-startrank][ord(startfile)-97]
+        cboard[8-endrank][ord(endfile)-97]=cboard[8-startrank][ord(startfile)-97]
         cboard[8-startrank][ord(startfile)-97]=orboard[8-startrank][ord(startfile)-97]
-        cboard[8-endrank][ord(endfile)-97]=originalpiece
+        print("")
         print("The current state is below:")
         print_chessboard(cboard)
 
