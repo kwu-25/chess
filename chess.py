@@ -33,35 +33,36 @@ def pieces():
     print_chessboard(cboard)
     return cboard
 
-def empty_square(rank, file, cboard):
-    if (cboard[8-rank][ord(file)-97] == "⬛" or
-    cboard[8-rank][ord(file)-97] == "⬜"):
+def empty_square(coord, cboard):
+    if (cboard[coord[0]][coord[1]] == "⬛" or
+    cboard[coord[0]][coord[1]] == "⬜"):
         return True
     else:
         return False
+    
+#def knight_move()
 
-def is_valid(originalpiece, turn, startrank, startfile, 
-             endrank, endfile, capturestate, cboard):
+def is_valid(originalpiece, turn, startcoord, endcoord, 
+             capturestate, cboard, endsquare):
     # If the start square is empty, invalid move
-    if empty_square(startrank, startfile, cboard) == True:
+    if empty_square(startcoord, cboard) == True:
         return False
     # If the piece is not the correct colour, invalid move
     if chesspieces[originalpiece]["Colour"] != turn:
         return False
     # If the end position is filled and no capture, invalid
     if (capturestate == False and 
-    empty_square(endrank, endfile, cboard) == False):
+    empty_square(endcoord, cboard) == False):
         return False
-    # If it is capture and end position is empty, invalid
+    # If capturing and end position is empty, invalid
     if (capturestate == True and 
-        empty_square(endrank, endfile, cboard) == True):
+        empty_square(endcoord, cboard) == True):
+        return False
+    # If capturing a same colour piece, invalid
+    if (capturestate == True and chesspieces[endsquare]["Colour"] == turn):
         return False
     
     
-    
-    # If the piece isn't allowed to move that way
-    
-    # If it wasn't invalid, then it's valid
     return True    
 
 def checkmate():
@@ -84,13 +85,16 @@ def chess_game():
             startfile = Move[1]
             endrank = int(Move[-1])
             endfile = Move[-2]
+            startcoord = (8-startrank, ord(startfile)-97)
+            endcoord = (8-endrank, ord(endfile)-97)
             capturestate = False
             if Move[-3]=="x":
                 capturestate = True
             #print(startrank, startfile, endrank, endfile, capturestate)
             originalpiece = cboard[8-startrank][ord(startfile)-97]
-            if is_valid(originalpiece, turn, startrank, startfile, 
-                        endrank, endfile, capturestate, cboard):
+            endsquare = cboard[8-endrank][ord(endfile)-97]
+            if is_valid(originalpiece, turn, startcoord, endcoord, 
+                        capturestate, cboard, endsquare):
                 break
             print("Please enter a valid move.")
         if turn == "White":
