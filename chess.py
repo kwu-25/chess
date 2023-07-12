@@ -33,12 +33,35 @@ def pieces():
     print_chessboard(cboard)
     return cboard
 
-def is_valid(originalpiece, turn):
+def empty_square(rank, file, cboard):
+    if (cboard[8-rank][ord(file)-97] == "⬛" or
+    cboard[8-rank][ord(file)-97] == "⬜"):
+        return True
+    else:
+        return False
+
+def is_valid(originalpiece, turn, startrank, startfile, 
+             endrank, endfile, capturestate, cboard):
+    # If the start square is empty, invalid move
+    if empty_square(startrank, startfile, cboard) == True:
+        return False
+    # If the piece is not the correct colour, invalid move
     if chesspieces[originalpiece]["Colour"] != turn:
+        return False
+    # If the end position is filled and no capture, invalid
+    if (capturestate == False and 
+    empty_square(endrank, endfile, cboard) == False):
+        return False
+    # If it is capture and end position is empty, invalid
+    if (capturestate == True and 
+        empty_square(endrank, endfile, cboard) == True):
         return False
     
     
     
+    # If the piece isn't allowed to move that way
+    
+    # If it wasn't invalid, then it's valid
     return True    
 
 def checkmate():
@@ -64,13 +87,12 @@ def chess_game():
             capturestate = False
             if Move[-3]=="x":
                 capturestate = True
-            #piececheck = False
-            #if ...
             #print(startrank, startfile, endrank, endfile, capturestate)
             originalpiece = cboard[8-startrank][ord(startfile)-97]
-            if is_valid(originalpiece, turn):
-                print("Please enter a valid move.")
+            if is_valid(originalpiece, turn, startrank, startfile, 
+                        endrank, endfile, capturestate, cboard):
                 break
+            print("Please enter a valid move.")
         if turn == "White":
             turn = "Black"
         else:
@@ -82,3 +104,5 @@ def chess_game():
         cboard[8-endrank][ord(endfile)-97]=originalpiece
         print("The current state is below:")
         print_chessboard(cboard)
+
+chess_game()
