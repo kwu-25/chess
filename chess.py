@@ -33,11 +33,11 @@ def pieces():
     print_chessboard(cboard)
     return cboard
 
-def move_length(startcoord, endcoord):
-    #hor_move positive is movement towards the left, ver_move positive is up
-    ver_move = startcoord[0]-endcoord[0]
-    hor_move = startcoord[1]-endcoord[1]
-    return (ver_move, hor_move)
+def move_length(stcord, endcord):
+    #hmove positive is movement towards the left, vmove positive is up
+    vmove = stcord[0]-endcord[0]
+    hmove = stcord[1]-endcord[1]
+    return (vmove, hmove)
 
 def square_status(coord, cboard):
     #square status returns status of piece and false otherwise (empty)
@@ -52,70 +52,96 @@ def square_status(coord, cboard):
         #print("The square is empty")
         return False
     
-def knight_move(startcoord, endcoord):
-    (hor_move,ver_move) = move_length(startcoord,endcoord)
-    if ((abs(hor_move) == 2 and abs(ver_move) == 1) or (abs(hor_move) == 1 and abs(ver_move) == 2)):
+def knight_move(stcord, endcord):
+    (hmove,vmove) = move_length(stcord,endcord)
+    if ((abs(hmove) == 2 and abs(vmove) == 1) or (abs(hmove) == 1 and abs(vmove) == 2)):
         return True
-    else: 
-        return False
+    return False
+    
+def king_move(stcord, endcord):
+    (hmove,vmove) = move_length(stcord,endcord)
+    if ((abs(hmove) == 1 or hmove == 0) and (abs(vmove) == 1 or vmove == 0)):
+        return True
+    return False
 
-def rook_move(startcoord, endcoord, cboard):
-    (ver_move,hor_move) = move_length(startcoord,endcoord)
-    #vertical movement, -i*int(ver_move/abs(ver_move)) determines direction of i depending
-    #on whether movement is up or down
-    if hor_move == 0:
-        for i in range(1, abs(ver_move)):
-            if bool(square_status((startcoord[0]-i*int(ver_move/abs(ver_move)),startcoord[1]), cboard)) == True:
-                #print(f"{(startcoord[0]-i*int(ver_move/abs(ver_move)),startcoord[1])} is nonempty")
+def bishop_move(stcord, endcord, cboard):
+    (hmove,vmove) = move_length(stcord,endcord)
+    if abs(hmove)==abs(vmove):
+        print(abs(vmove))
+    #will require similar strategy to rook, iterating squares between to check for occupancy
+        for i in range (1, abs(vmove)):
+            #print((stcord[0]-i*int(hmove/abs(hmove)),stcord[1]-i*int(vmove/abs(vmove))))
+            if bool(square_status((stcord[0]-i*int(hmove/abs(hmove)),stcord[1]-i*int(vmove/abs(vmove))), cboard)) == True:
                 return False
-        #print("All empty")
+        return True
+    return False
+
+def rook_move(stcord, endcord, cboard):
+    (vmove,hmove) = move_length(stcord,endcord)
+    #vertical movement, -i*int(vmove/abs(vmove)) determines direction of i depending on whether movement is up or down
+    if hmove == 0:
+        for i in range(1, abs(vmove)):
+            if bool(square_status((stcord[0]-i*int(vmove/abs(vmove)),stcord[1]), cboard)) == True:
+                #print(f"{(stcord[0]-i*int(vmove/abs(vmove)),stcord[1])} is nonempty")
+                return False
         return True
     #horizontal similar to vertical
-    if ver_move == 0:
-        for i in range(1, abs(hor_move)):
-            #print((startcoord[0],startcoord[1]-i*int(hor_move/abs(hor_move))))
-            if bool(square_status((startcoord[0],startcoord[1]-i*int(hor_move/abs(hor_move))), cboard)) == True:
-                #print(f"{(startcoord[0],startcoord[1]-i*int(hor_move/abs(hor_move)))} is nonempty")
+    if vmove == 0:
+        for i in range(1, abs(hmove)):
+            #print((stcord[0],stcord[1]-i*int(hmove/abs(hmove))))
+            if bool(square_status((stcord[0],stcord[1]-i*int(hmove/abs(hmove))), cboard)) == True:
+                #print(f"{(stcord[0],stcord[1]-i*int(hmove/abs(hmove)))} is nonempty")
                 return False
-        #print("All empty")
         return True
-    else:
-        #print("Not move")
-        return False
+    return False
+
+def queen_move(stcord, endcord, cboard):
+    # This is just a combination of rook and bishop moves
+    if (rook_move(stcord, endcord, cboard) == True or bishop_move(stcord, endcord, cboard) == True):
+        return True
+    return False
+
+def pawn_move(stcord, endcord, cboard, capturestate):
+    return True
     
-def is_valid(turn, startcoord, endcoord, 
-             capturestate, cboard):
+def is_valid(turn, stcord, endcord, capturestate, cboard):
     # Positions must be within [0:7]
-    if ((startcoord[0] or startcoord[1] or endcoord[0] or endcoord[1]) > 7 or 
-    (startcoord[0] or startcoord[1] or endcoord[0] or endcoord[1]) < 0):
+    if ((stcord[0] or stcord[1] or endcord[0] or endcord[1]) > 7 or 
+    (stcord[0] or stcord[1] or endcord[0] or endcord[1]) < 0):
         return False
     #Cannot go from same square to itself is satisfied by later conditions
     # If the start square is empty, invalid move
-    if square_status(startcoord, cboard) == False:
+    if square_status(stcord, cboard) == False:
         return False
     # If the piece is not the correct colour, invalid move
-    if chesspieces[square_status(startcoord, cboard)]["Colour"] != turn:
+    if chesspieces[square_status(stcord, cboard)]["Colour"] != turn:
         return False
     # If the end position is filled and no capture, invalid
     if (capturestate == False and 
-    bool(square_status(endcoord, cboard)) == True):
+    bool(square_status(endcord, cboard)) == True):
         return False
     # If capturing and end position is empty, invalid
     if (capturestate == True and 
-        square_status(endcoord, cboard) == False):
+        square_status(endcord, cboard) == False):
         return False
     # If capturing a same colour piece, invalid
-    if (capturestate == True and chesspieces[square_status(endcoord, cboard)]["Colour"] == turn):
+    if (capturestate == True and chesspieces[square_status(endcord, cboard)]["Colour"] == turn):
         return False
-    # Need to consider move conditions under check
-    print(startcoord)
-    print(endcoord)
-    if chesspieces[square_status(startcoord, cboard)]["Type"] == "Knight":
-        return knight_move(startcoord, endcoord)
-    #if chesspieces[square_status(startcoord, cboard)]["Type"] == "King":
-        #return king_move(startcoord, endcoord, cboard)
-    if chesspieces[square_status(startcoord, cboard)]["Type"] == "Rook":
-        return rook_move(startcoord, endcoord, cboard)
+    print(stcord)
+    print(endcord)
+    if chesspieces[square_status(stcord, cboard)]["Type"] == "Knight":
+        return knight_move(stcord, endcord)
+    if chesspieces[square_status(stcord, cboard)]["Type"] == "King":
+        return king_move(stcord, endcord)
+    if chesspieces[square_status(stcord, cboard)]["Type"] == "Rook":
+        return rook_move(stcord, endcord, cboard)
+    if chesspieces[square_status(stcord, cboard)]["Type"] == "Bishop":
+        return bishop_move(stcord, endcord, cboard)
+    if chesspieces[square_status(stcord, cboard)]["Type"] == "Queen":
+        return queen_move(stcord, endcord, cboard)
+    if chesspieces[square_status(stcord, cboard)]["Type"] == "Pawn":
+        return pawn_move(stcord, endcord, cboard, capturestate)
+    # Lastly, need to consider if moves will result in own side check
     return True    
 
 def check():
@@ -142,26 +168,25 @@ def chess_game():
             endrank = int(Move[-1])
             endfile = Move[-2]
             piecename = Move[0]
-            startcoord = (8-startrank, ord(startfile)-97)
-            endcoord = (8-endrank, ord(endfile)-97)
+            stcord = (8-startrank, ord(startfile)-97)
+            endcord = (8-endrank, ord(endfile)-97)
             capturestate = False
             if Move[-3]=="x":
                 capturestate = True
             #print(startrank, startfile, endrank, endfile, capturestate)
             endsquare = cboard[8-endrank][ord(endfile)-97]
-            if is_valid(turn, startcoord, endcoord, 
-                        capturestate, cboard):
+            if is_valid(turn, stcord, endcord, capturestate, cboard):
                 break
             print("Please enter a valid move.")
 
         #next (useless) block prints in words the move
-        print(f"{turn} {chesspieces[square_status(startcoord, cboard)]['Type']} moves from {startfile}{startrank} to {endfile}{endrank}")
+        print(f"{turn} {chesspieces[square_status(stcord, cboard)]['Type']} moves from {startfile}{startrank} to {endfile}{endrank}")
         if turn == "White":
             turn = "Black"
         else:
             turn = "White"
         if capturestate == True:
-            print(f"and takes {turn} {chesspieces[square_status(endcoord, cboard)]['Type']}")
+            print(f"and takes {turn} {chesspieces[square_status(endcord, cboard)]['Type']}")
         turn_no += 1
         #need to replace start position with original board square
         cboard[8-endrank][ord(endfile)-97]=cboard[8-startrank][ord(startfile)-97]
