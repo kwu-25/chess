@@ -33,11 +33,16 @@ def pieces():
     print_chessboard(cboard)
     return cboard
 
-def empty_square(coord, cboard):
-    if (cboard[coord[0]][coord[1]] == "⬛" or
-    cboard[coord[0]][coord[1]] == "⬜"):
-        return True
+def square_status(coord, cboard):
+    #square status returns status of piece and false otherwise (empty)
+    piece = cboard[coord[0]][coord[1]]
+    piecetype = None
+    if piece in chesspieces.keys():
+        #print(f"The piece {piece} is a {chesspieces[piece]['Colour']} {chesspieces[piece]['Type']}")
+        piecetype = (chesspieces[piece]['Colour'],chesspieces[piece]['Type'])
+        return piece
     else:
+        #print("The square is empty")
         return False
     
 #def knight_move()
@@ -45,24 +50,24 @@ def empty_square(coord, cboard):
 def is_valid(originalpiece, turn, startcoord, endcoord, 
              capturestate, cboard, endsquare):
     # If the start square is empty, invalid move
-    if empty_square(startcoord, cboard) == True:
+    if square_status(startcoord, cboard) == False:
         return False
     # If the piece is not the correct colour, invalid move
     if chesspieces[originalpiece]["Colour"] != turn:
         return False
     # If the end position is filled and no capture, invalid
     if (capturestate == False and 
-    empty_square(endcoord, cboard) == False):
+    square_status(endcoord, cboard) == True):
         return False
     # If capturing and end position is empty, invalid
     if (capturestate == True and 
-        empty_square(endcoord, cboard) == True):
+        square_status(endcoord, cboard) == False):
         return False
     # If capturing a same colour piece, invalid
     if (capturestate == True and chesspieces[endsquare]["Colour"] == turn):
         return False
     
-    
+
     return True    
 
 def checkmate():
@@ -80,7 +85,7 @@ def chess_game():
     while not checkmate():
         while True:
             print(f"It is currently turn {turn_no}, {turn} to move")
-            Move = input("Please enter your move in the above format.")
+            Move = input("Please enter your move in the above format. ")
             startrank = int(Move[2])
             startfile = Move[1]
             endrank = int(Move[-1])
