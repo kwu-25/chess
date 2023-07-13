@@ -53,25 +53,25 @@ def square_status(coord, cboard):
         return False
     
 def knight_move(stcord, endcord):
-    (hmove,vmove) = move_length(stcord,endcord)
+    (vmove,hmove) = move_length(stcord,endcord)
     if ((abs(hmove) == 2 and abs(vmove) == 1) or (abs(hmove) == 1 and abs(vmove) == 2)):
         return True
     return False
     
 def king_move(stcord, endcord):
-    (hmove,vmove) = move_length(stcord,endcord)
+    (vmove,hmove) = move_length(stcord,endcord)
     if ((abs(hmove) == 1 or hmove == 0) and (abs(vmove) == 1 or vmove == 0)):
         return True
     return False
 
 def bishop_move(stcord, endcord, cboard):
-    (hmove,vmove) = move_length(stcord,endcord)
-    if abs(hmove)==abs(vmove):
-        print(abs(vmove))
+    (vmove,hmove) = move_length(stcord,endcord)
+    if abs(vmove)==abs(hmove):
+        print(abs(hmove))
     #will require similar strategy to rook, iterating squares between to check for occupancy
         for i in range (1, abs(vmove)):
-            #print((stcord[0]-i*int(hmove/abs(hmove)),stcord[1]-i*int(vmove/abs(vmove))))
-            if bool(square_status((stcord[0]-i*int(hmove/abs(hmove)),stcord[1]-i*int(vmove/abs(vmove))), cboard)) == True:
+            #print((stcord[0]-i*int(vmove/abs(vmove)),stcord[1]-i*int(hmove/abs(hmove))))
+            if bool(square_status((stcord[0]-i*int(vmove/abs(vmove)),stcord[1]-i*int(hmove/abs(hmove))), cboard)) == True:
                 return False
         return True
     return False
@@ -102,7 +102,26 @@ def queen_move(stcord, endcord, cboard):
     return False
 
 def pawn_move(stcord, endcord, cboard, capturestate):
-    return True
+    (hmove,vmove) = move_length(stcord,endcord)
+    # colour returns 1 or -1 in order to make legal movement dependent on colour
+    if chesspieces[square_status(stcord, cboard)]["Colour"] == "White":
+        colour = 1
+    else:
+        colour = -1
+    # move of 2 tiles at start position
+    print(stcord[0])
+    print(vmove*colour)
+    print(hmove)
+    print(capturestate)
+    if (stcord[0] == 6 and vmove*colour == 2 and hmove == 0 and capturestate == False):
+        return True
+    elif (vmove*colour == 1 and hmove == 0 and capturestate == False):
+        return True
+    # next one for capture
+    elif (vmove*colour == 1 and abs(hmove) == 1 and capturestate == True):
+        return True
+    else:
+        return False
     
 def is_valid(turn, stcord, endcord, capturestate, cboard):
     # Positions must be within [0:7]
