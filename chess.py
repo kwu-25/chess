@@ -21,6 +21,8 @@ def pieces():
         cboard[6][i]="♟︎"
     #cboard[6][5]="♙"
     #cboard[1][5]="♟︎"
+    cboard[6][5]="♕"
+    cboard[5][5]="♕"
     print_chessboard(cboard)
     return cboard
 
@@ -96,14 +98,17 @@ def pawn_move(stcord, endcord, cboard, capturestate):
     (vmove,hmove) = move_length(stcord,endcord)
     # colour returns 1 or -1 in order to make legal movement dependent on colour
     if chesspieces[square_status(stcord, cboard)]["Colour"] == "White":
-        start_row = stcord[0] == 6
+        start_row = 6
         colour = 1
     else:
-        start_row = stcord[0] == 1
+        start_row = 1
         colour = -1
     # move of 2 tiles at start position
-    if (stcord[0] == int(3.5+2.5*colour) and vmove*colour == 2 and hmove == 0 and capturestate == False):
-        return True
+    if (stcord[0] == start_row and vmove*colour == 2 and hmove == 0 and capturestate == False):
+        # coordinate inbetween must be empty
+        if square_status(((stcord[0]-colour), stcord[1]), cboard) == False:
+            return True
+        return False
     elif (vmove*colour == 1 and hmove == 0 and capturestate == False):
         return True
     # next one for capture
@@ -251,9 +256,21 @@ def checkspecial():
     return False
 
 
-def checkmate():
+def checkmate(anyboard, turn):
+    if checkall(anyboard, turn) == False:
+        print("allfine")
+        return False
+    else:
+        for i in range(8): 
+            for j in range(8):
+                #print(square_status((i,j), anyboard))
+                if square_status((i,j), anyboard) != False:
+                    piece = chesspieces[square_status((i,j), anyboard)]
+                    while checkall(anyboard, turn) == True:
+                        
+                
     
-    return False   
+    #return False   
 
 def chess_game():
     print("Welcome to chess game!")
@@ -265,7 +282,8 @@ def chess_game():
     turn = "White"
     #turn = "Black"
     turn_no = 1
-    while not checkmate():
+    checkmate(cboard, turn)
+    while not checkmate(cboard, turn):
         while True:
             print(f"It is currently turn {turn_no}, {turn} to move")
             tempboard = deepcopy(cboard)
