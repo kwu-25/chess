@@ -1,17 +1,6 @@
 from chessprinting import *
+from copy import deepcopy
 
-chesspieces = {"♚": {"Colour": "White", "Type": "King"}, 
-               "♔": {"Colour": "Black", "Type": "King"},
-               "♛": {"Colour": "White", "Type": "Queen"},
-               "♕": {"Colour": "Black", "Type": "Queen"},
-               "♝": {"Colour": "White", "Type": "Bishop"},
-               "♗": {"Colour": "Black", "Type": "Bishop"},
-               "♞": {"Colour": "White", "Type": "Knight"},
-               "♘": {"Colour": "Black", "Type": "Knight"},
-               "♜": {"Colour": "White", "Type": "Rook"},
-               "♖": {"Colour": "Black", "Type": "Rook"},
-               "♟︎": {"Colour": "White", "Type": "Pawn"},
-               "♙": {"Colour": "Black", "Type": "Pawn"}}
 
 def pieces():
     orboard=chessboard()
@@ -26,9 +15,9 @@ def pieces():
     cboard[7][3]="♛"
     cboard[0][4]="♔"
     cboard[7][4]="♚"
-    for i in range (4):
+    for i in range (0):
         cboard[1][i]="♙"
-    for i in range (4):
+    for i in range (0):
         cboard[6][i]="♟︎"
     print_chessboard(cboard)
     return cboard
@@ -52,13 +41,13 @@ def square_status(coord, cboard):
         #print("The square is empty")
         return False
     
-def knight_move(stcord, endcord):
+def knight_move(stcord, endcord, cboard):
     (vmove,hmove) = move_length(stcord,endcord)
     if ((abs(hmove) == 2 and abs(vmove) == 1) or (abs(hmove) == 1 and abs(vmove) == 2)):
         return True
     return False
     
-def king_move(stcord, endcord):
+def king_move(stcord, endcord, cboard):
     (vmove,hmove) = move_length(stcord,endcord)
     if ((abs(hmove) == 1 or hmove == 0) and (abs(vmove) == 1 or vmove == 0)):
         return True
@@ -102,18 +91,16 @@ def queen_move(stcord, endcord, cboard):
     return False
 
 def pawn_move(stcord, endcord, cboard, capturestate):
-    (hmove,vmove) = move_length(stcord,endcord)
+    (vmove,hmove) = move_length(stcord,endcord)
     # colour returns 1 or -1 in order to make legal movement dependent on colour
     if chesspieces[square_status(stcord, cboard)]["Colour"] == "White":
+        start_row = stcord[0] == 6
         colour = 1
     else:
+        start_row = stcord[0] == 1
         colour = -1
     # move of 2 tiles at start position
-    print(stcord[0])
-    print(vmove*colour)
-    print(hmove)
-    print(capturestate)
-    if (stcord[0] == 6 and vmove*colour == 2 and hmove == 0 and capturestate == False):
+    if (stcord[0] == int(3.5+2.5*colour) and vmove*colour == 2 and hmove == 0 and capturestate == False):
         return True
     elif (vmove*colour == 1 and hmove == 0 and capturestate == False):
         return True
@@ -121,18 +108,37 @@ def pawn_move(stcord, endcord, cboard, capturestate):
     elif (vmove*colour == 1 and abs(hmove) == 1 and capturestate == True):
         return True
     else:
+        print('invalid pawn move')
         return False
     
-def is_valid(turn, stcord, endcord, capturestate, cboard):
+chesspieces = {"♚": {"Colour": "White", "Type": "King", "validity_func": king_move}, 
+               "♔": {"Colour": "Black", "Type": "King", "validity_func": king_move},
+               "♛": {"Colour": "White", "Type": "Queen", "validity_func": queen_move},
+               "♕": {"Colour": "Black", "Type": "Queen", "validity_func": queen_move},
+               "♝": {"Colour": "White", "Type": "Bishop", "validity_func": bishop_move},
+               "♗": {"Colour": "Black", "Type": "Bishop", "validity_func": bishop_move},
+               "♞": {"Colour": "White", "Type": "Knight", "validity_func": knight_move},
+               "♘": {"Colour": "Black", "Type": "Knight", "validity_func": knight_move},
+               "♜": {"Colour": "White", "Type": "Rook", "validity_func": rook_move},
+               "♖": {"Colour": "Black", "Type": "Rook", "validity_func": rook_move},
+               "♟︎": {"Colour": "White", "Type": "Pawn", "validity_func": pawn_move},
+               "♙": {"Colour": "Black", "Type": "Pawn", "validity_func": pawn_move}}
+    
+def is_valid(turn, stcord, endcord, capturestate, cboard, tempboard):
     # Positions must be within [0:7]
-    if ((stcord[0] or stcord[1] or endcord[0] or endcord[1]) > 7 or 
+    
+    if ((stcord[0] or stcord[1] or endcord[0] or endcord[1]) > 7 or
     (stcord[0] or stcord[1] or endcord[0] or endcord[1]) < 0):
         return False
     #Cannot go from same square to itself is satisfied by later conditions
     # If the start square is empty, invalid move
+   
+    print(square_status(stcord, cboard))
+    print(cboard)
     if square_status(stcord, cboard) == False:
         return False
     # If the piece is not the correct colour, invalid move
+
     if chesspieces[square_status(stcord, cboard)]["Colour"] != turn:
         return False
     # If the end position is filled and no capture, invalid
@@ -149,9 +155,9 @@ def is_valid(turn, stcord, endcord, capturestate, cboard):
     print(stcord)
     print(endcord)
     if chesspieces[square_status(stcord, cboard)]["Type"] == "Knight":
-        return knight_move(stcord, endcord)
+        return knight_move(stcord, endcord, cboard)
     if chesspieces[square_status(stcord, cboard)]["Type"] == "King":
-        return king_move(stcord, endcord)
+        return king_move(stcord, endcord, cboard)
     if chesspieces[square_status(stcord, cboard)]["Type"] == "Rook":
         return rook_move(stcord, endcord, cboard)
     if chesspieces[square_status(stcord, cboard)]["Type"] == "Bishop":
@@ -161,10 +167,59 @@ def is_valid(turn, stcord, endcord, capturestate, cboard):
     if chesspieces[square_status(stcord, cboard)]["Type"] == "Pawn":
         return pawn_move(stcord, endcord, cboard, capturestate)
     # Lastly, need to consider if moves will result in own side check
+    wking_location(cboard)
+    bking_location(cboard)
+    checkall(cboard, turn, tempboard)
     return True    
 
-def check():
+def wking_location(cboard):
+    for i in range(8): 
+        for j in range(8):
+            if cboard[i][j] == "♚":
+                print(f" W king at {(i,j)}")
+                return (i,j)
+def bking_location(cboard):
+    for i in range(8): 
+        for j in range(8):
+            if cboard[i][j] == "♔":
+                print(f" B king at {(i,j)}")
+                return (i,j)
+
+def checkall(cboard, turn, tempboard): 
+    wkingnow = wking_location(cboard)
+    bkingnow = bking_location(cboard)
+    wkingif = wking_location(tempboard)
+    bkingif = bking_location(tempboard)
+    for i in range(8): 
+        for j in range(8):
+            if square_status((i,j), cboard) != False:
+                piece = chesspieces[square_status((i,j), cboard)]
+                if (turn == "White" and piece["Colour"] == "Black" and cboard[i][j] != "♙"):
+                    print(cboard[i][j])
+                    print(piece)
+                    print(chesspieces.get(cboard[i][j]).get("validity_func")((i,j), wkingnow, cboard))
+                    if chesspieces.get(cboard[i][j]).get("validity_func")((i,j), wkingnow, cboard) == True:
+                        print("White King under check")
+                        #return False
+                    print(chesspieces.get(cboard[i][j]).get("validity_func")((i,j), wkingif, tempboard))
+                    if chesspieces.get(cboard[i][j]).get("validity_func")((i,j), wkingif, tempboard) == True:
+                        print("White King will be under check")
+                        return False
+                else:
+                    print("No White Check")
+                    return True
     return False
+                    
+def into_check(cboard, turn):
+    return False
+
+def checkpawn(cboard, turn):
+    
+    return False
+
+def checkspecial():
+    return False
+
 
 def checkmate():
     return False   
@@ -186,15 +241,19 @@ def chess_game():
             startfile = Move[1]
             endrank = int(Move[-1])
             endfile = Move[-2]
-            piecename = Move[0]
+            #piecename = Move[0]
             stcord = (8-startrank, ord(startfile)-97)
             endcord = (8-endrank, ord(endfile)-97)
             capturestate = False
             if Move[-3]=="x":
                 capturestate = True
             #print(startrank, startfile, endrank, endfile, capturestate)
-            endsquare = cboard[8-endrank][ord(endfile)-97]
-            if is_valid(turn, stcord, endcord, capturestate, cboard):
+            tempboard = deepcopy(cboard)
+            tempboard[8-endrank][ord(endfile)-97]=tempboard[8-startrank][ord(startfile)-97]
+            tempboard[8-startrank][ord(startfile)-97]=orboard[8-startrank][ord(startfile)-97]
+            #tempboard = True
+           
+            if is_valid(turn, stcord, endcord, capturestate, cboard, tempboard):
                 break
             print("Please enter a valid move.")
 
