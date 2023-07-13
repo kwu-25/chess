@@ -19,6 +19,8 @@ def pieces():
         cboard[1][i]="♙"
     for i in range (8):
         cboard[6][i]="♟︎"
+    #cboard[6][5]="♙"
+    #cboard[1][5]="♟︎"
     print_chessboard(cboard)
     return cboard
 
@@ -123,17 +125,23 @@ chesspieces = {"♚": {"Colour": "White", "Type": "King", "validity_func": king_
                "♖": {"Colour": "Black", "Type": "Rook", "validity_func": rook_move},
                "♟︎": {"Colour": "White", "Type": "Pawn", "validity_func": pawn_move},
                "♙": {"Colour": "Black", "Type": "Pawn", "validity_func": pawn_move}}
+
+validpiecenames = ["p", "P", "n", "N", "q", "Q", "k", "K", "b", "B", "r", "R"]
+
+validfiles = ["a", "b", "c", "d", "e", "f", "g", "h"]
+
+validranks = ["1", "2", "3", "4", "5", "6", "7", "8"]
     
 def is_valid(turn, stcord, endcord, capturestate, cboard):
     # Positions must be within [0:7]
     
-    if ((stcord[0] or stcord[1] or endcord[0] or endcord[1]) > 7 or
-    (stcord[0] or stcord[1] or endcord[0] or endcord[1]) < 0):
-        return False
+    #if ((stcord[0] or stcord[1] or endcord[0] or endcord[1]) > 7 or
+    #(stcord[0] or stcord[1] or endcord[0] or endcord[1]) < 0):
+        #return False
     #Cannot go from same square to itself is satisfied by later conditions
     # If the start square is empty, invalid move
-    print("Square status of start")
-    print(square_status(stcord, cboard))
+    #print("Square status of start")
+    #print(square_status(stcord, cboard))
     #print(cboard)
     if square_status(stcord, cboard) == False:
         return False
@@ -152,8 +160,8 @@ def is_valid(turn, stcord, endcord, capturestate, cboard):
     # If capturing a same colour piece, invalid
     if (capturestate == True and chesspieces[square_status(endcord, cboard)]["Colour"] == turn):
         return False
-    print(stcord)
-    print(endcord)
+    #print(stcord)
+    #print(endcord)
     if chesspieces[square_status(stcord, cboard)]["Type"] == "Knight":
         return knight_move(stcord, endcord, cboard)
     if chesspieces[square_status(stcord, cboard)]["Type"] == "King":
@@ -202,8 +210,10 @@ def checkall(anyboard, turn):
                         print("White King is checked")
                         return True
                     # now onto the pawn conditions
-                #elif (turn == "White" and anyboard[i][j] == "♙"):
-                    #return
+                elif (turn == "White" and anyboard[i][j] == "♙"):
+                    if 1 == wking[0]-i and abs(j-wking[1]) == 1:
+                        print("White King is checked")
+                        return True
                 elif (turn == "Black" and piece["Colour"] == "White" and anyboard[i][j] != "♟︎"):
                     #print(anyboard[i][j])
                     #print(piece)
@@ -211,23 +221,38 @@ def checkall(anyboard, turn):
                     if (chesspieces.get(anyboard[i][j]).get("validity_func")((i,j), bking, anyboard)) == True:
                         print("Black King is checked")
                         return True
+                elif (turn == "Black" and anyboard[i][j] == "♟︎"):
+                    if 1 == i-bking[0] and abs(j-bking[1]) == 1:
+                        print("Black King is checked")
+                        return True
     else:
-        print(f"No {turn} Check")
+        #print(f"No {turn} Check")
         return False
     return True
                     
-def into_check(cboard, turn):
-    return False
-
-def checkpawn(cboard, turn):
-    
-    return False
+def movevalidity(Move):
+    #print("started validity")
+    if len(Move) == 5 or (len(Move) == 6 and (Move[3] == "x" or Move[3] == "X")):
+        #print("started this bit")
+        if (Move[0] in validpiecenames) == False:
+            return False
+        #print("ontosecond")
+        if (Move[1] in validfiles and Move[-2] in validfiles) == False:
+            return False
+        #print("onto3")
+        if (Move[-1] in validranks and Move[2] in validranks) == False:
+            return False
+        #print("supposed to be fine???")
+        return True
+    else: 
+        return False
 
 def checkspecial():
     return False
 
 
 def checkmate():
+    
     return False   
 
 def chess_game():
@@ -245,7 +270,12 @@ def chess_game():
             print(f"It is currently turn {turn_no}, {turn} to move")
             tempboard = deepcopy(cboard)
             checkall(cboard, turn)
-            Move = input("Please enter your move in the above format. ")
+            while True:   
+                Move = input("Please enter your move in the above format. ")
+                #print(movevalidity(Move))
+                if movevalidity(Move):
+                    break
+                print("Please enter a valid move")
             startrank = int(Move[2])
             startfile = Move[1]
             endrank = int(Move[-1])
@@ -257,15 +287,14 @@ def chess_game():
             if Move[-3]=="x":
                 capturestate = True
             #print(startrank, startfile, endrank, endfile, capturestate)
-            
             tempboard[8-endrank][ord(endfile)-97]=tempboard[8-startrank][ord(startfile)-97]
             tempboard[8-startrank][ord(startfile)-97]=orboard[8-startrank][ord(startfile)-97]
             #tempboard = True
-            print("second time")
+            #print("second time")
             #print(bool(checkall(tempboard, turn)))
             if (is_valid(turn, stcord, endcord, capturestate, cboard) and (not checkall(tempboard, turn))):
                 break
-            print("Please enter a valid move.")
+            print("Please enter a legal move")
 
         #next (useless) block prints in words the move
         print(f"{turn} {chesspieces[square_status(stcord, cboard)]['Type']} moves from {startfile}{startrank} to {endfile}{endrank}")
