@@ -1,6 +1,8 @@
 from chessprinting import *
 from copy import deepcopy
 
+#note this was written on dark mode, so the piece and square colours may be 
+#switched in regular (light) mode
 
 def pieces():
     orboard=chessboard()
@@ -60,7 +62,7 @@ def king_move(stcord, endcord, cboard):
 def bishop_move(stcord, endcord, cboard):
     (vmove,hmove) = move_length(stcord,endcord)
     if abs(vmove)==abs(hmove):
-        print(abs(hmove))
+        #print(abs(hmove))
     #will require similar strategy to rook, iterating squares between to check for occupancy
         for i in range (1, abs(vmove)):
             #print((stcord[0]-i*int(vmove/abs(vmove)),stcord[1]-i*int(hmove/abs(hmove))))
@@ -211,24 +213,26 @@ def checkall(anyboard, turn):
                     #print(anyboard[i][j])
                     #print(piece)
                     #print(chesspieces.get(anyboard[i][j]).get("validity_func")((i,j), wking, anyboard))
+                    #print(chesspieces.get(anyboard[i][j]))
                     if (chesspieces.get(anyboard[i][j]).get("validity_func")((i,j), wking, anyboard)) == True:
-                        print("White King is checked")
+                        #print("White King is checked")
                         return True
+                    #return True
                     # now onto the pawn conditions
                 elif (turn == "White" and anyboard[i][j] == "♙"):
                     if 1 == wking[0]-i and abs(j-wking[1]) == 1:
-                        print("White King is checked")
+                        #print("White King is checked")
                         return True
                 elif (turn == "Black" and piece["Colour"] == "White" and anyboard[i][j] != "♟︎"):
                     #print(anyboard[i][j])
                     #print(piece)
                     #print(chesspieces.get(anyboard[i][j]).get("validity_func")((i,j), bking, anyboard))
                     if (chesspieces.get(anyboard[i][j]).get("validity_func")((i,j), bking, anyboard)) == True:
-                        print("Black King is checked")
+                        #print("Black King is checked")
                         return True
                 elif (turn == "Black" and anyboard[i][j] == "♟︎"):
                     if 1 == i-bking[0] and abs(j-bking[1]) == 1:
-                        print("Black King is checked")
+                        #print("Black King is checked")
                         return True
     else:
         #print(f"No {turn} Check")
@@ -238,16 +242,12 @@ def checkall(anyboard, turn):
 def movevalidity(Move):
     #print("started validity")
     if len(Move) == 5 or (len(Move) == 6 and (Move[3] == "x" or Move[3] == "X")):
-        #print("started this bit")
         if (Move[0] in validpiecenames) == False:
             return False
-        #print("ontosecond")
         if (Move[1] in validfiles and Move[-2] in validfiles) == False:
             return False
-        #print("onto3")
         if (Move[-1] in validranks and Move[2] in validranks) == False:
             return False
-        #print("supposed to be fine???")
         return True
     else: 
         return False
@@ -257,6 +257,7 @@ def checkspecial():
 
 
 def checkmate(anyboard, turn):
+    #print("startedthis")
     if checkall(anyboard, turn) == False:
         print("allfine")
         return False
@@ -266,8 +267,9 @@ def checkmate(anyboard, turn):
                 #print(square_status((i,j), anyboard))
                 if square_status((i,j), anyboard) != False:
                     piece = chesspieces[square_status((i,j), anyboard)]
+                    #print(checkall(anyboard, turn))
                     while checkall(anyboard, turn) == True:
-                        
+                        return False
                 
     
     #return False   
@@ -282,12 +284,13 @@ def chess_game():
     turn = "White"
     #turn = "Black"
     turn_no = 1
-    checkmate(cboard, turn)
+    #checkmate(cboard, turn)
     while not checkmate(cboard, turn):
         while True:
             print(f"It is currently turn {turn_no}, {turn} to move")
             tempboard = deepcopy(cboard)
-            checkall(cboard, turn)
+            if checkall(cboard, turn) == True:
+                print(f"Note that you are under check")
             while True:   
                 Move = input("Please enter your move in the above format. ")
                 #print(movevalidity(Move))
