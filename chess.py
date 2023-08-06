@@ -9,12 +9,12 @@ def pieces():
     cboard=chessboard()
     cboard[0][0]=cboard[0][7]="♖"
     cboard[7][0]=cboard[7][7]="♜"
-    cboard[0][1]=cboard[0][6]="♘"
-    cboard[7][1]=cboard[7][6]="♞"
-    cboard[0][2]=cboard[0][5]="♗"
-    cboard[7][2]=cboard[7][5]="♝"
-    cboard[0][3]="♕"
-    cboard[7][3]="♛"
+    #cboard[0][1]=cboard[0][6]="♘"
+    #cboard[7][1]=cboard[7][6]="♞"
+    #cboard[0][2]=cboard[0][5]="♗"
+    #cboard[7][2]=cboard[7][5]="♝"
+    #cboard[0][3]="♕"
+    #cboard[7][3]="♛"
     cboard[0][4]="♔"
     cboard[7][4]="♚"
     for i in range (8):
@@ -140,7 +140,12 @@ chesspieces = {"♚": {"Colour": "White", "Type": "King", "validity_func": king_
                "♟︎": {"Colour": "White", "Type": "Pawn", "validity_func": pawn_move},
                "♙": {"Colour": "Black", "Type": "Pawn", "validity_func": pawn_move}}
 
-validpiecenames = ["p", "P", "n", "N", "q", "Q", "k", "K", "b", "B", "r", "R"]
+piecenames = {"P": "Pawn", "Q": "Queen", "K": "King", "R": "Rook",
+              "N": "Knight", "B": "Bishop"}
+
+validpromotion = ["N", "Q", "B", "R"]
+whitepromotion = {"Q": "♛", "R": "♜", "N": "♞", "B": "♝"}
+blackpromotion = {"Q": "♕", "R": "♖", "N": "♘", "B": "♗"}
 
 validfiles = ["a", "b", "c", "d", "e", "f", "g", "h"]
 
@@ -148,7 +153,8 @@ validranks = ["1", "2", "3", "4", "5", "6", "7", "8"]
 
 #generates a list of coordinates to avoid iteration later on
 coords = [(i,j) for i in range(8) for j in range(8)]
-
+        
+    
     
 def is_valid(turn, stcord, endcord, capturestate, cboard):
     #returns False if invalid, True otherwise
@@ -190,6 +196,35 @@ def is_valid(turn, stcord, endcord, capturestate, cboard):
     if chesspieces[square_status(stcord, cboard)]["Type"] == "Pawn":
         return pawn_move(stcord, endcord, cboard, capturestate)
     return True
+
+def isvalidpromotion(turn, Move, cboard):
+    #returns False if invalid, True otherwise
+    startrank = int(Move[2])
+    startfile = Move[1]
+    stcord = (8-startrank, ord(startfile)-97)
+    if (square_status(stcord, cboard) == "♟︎") and (turn == "White") and \
+    (startrank == 8) and (Move[-1] in validpromotion) == True:
+        return True
+    elif (square_status(stcord, cboard) == "♙") and (turn == "Black") and \
+    (startrank == 1) and (Move[-1] in validpromotion) == True:
+        return True
+    return False
+
+def isvalidcastle(turn, Move, cboard, castlestatus):
+    #returns False if invalid, True otherwise
+    if turn == "White" and castlestatus[1] == 0:
+        if Move == "000" and castlestatus[0] == 0 and \
+        rook_move((7,0), (7,3), cboard) == True: return True
+        elif Move == "00" and castlestatus[2] == 0  and \
+        rook_move((7,7), (7,5), cboard) == True: return True
+        else: return False
+    if turn == "Black" and castlestatus[4] == 0:
+        if Move == "000" and castlestatus[3] == 0 and \
+        rook_move((0,0), (0,3), cboard) == True: return True
+        elif Move == "00" and castlestatus[5] == 0 and \
+        rook_move((0,7), (0,5), cboard) == True: return True
+        else: return False
+    return False
 
 def wking_location(cboard):
     for x in coords:
@@ -252,12 +287,12 @@ def movevalidity(Move):
     if Move == "00" or Move == "000":
         return True
     #promotion
-    if len(Move) == 4 and (Move[0] in validpiecenames) == True \
-    and (Move[1] in validfiles) == True and (Move[-1] in validpiecenames) == True \
+    if len(Move) == 4 and (Move[0] in dict.keys(piecenames)) == True \
+    and (Move[1] in validfiles) == True and (Move[-1] in dict.keys(piecenames)) == True \
     and (Move[2] in validranks) == True:
         return True
     if len(Move) == 5 or (len(Move) == 6 and (Move[3] == "x" or Move[3] == "X")):
-        if (Move[0] in validpiecenames) == False:
+        if (Move[0] in dict.keys(piecenames)) == False:
             return False
         if (Move[1] in validfiles and Move[-2] in validfiles) == False:
             return False
@@ -267,6 +302,19 @@ def movevalidity(Move):
     else: 
         return False
 
+def rookandkingtracker(anyboard, turn_no):
+    #initialise movement tracking of rooks and kings for castling
+    #if piece has moved then status changes to True
+    if turn_no != 1000:
+        lwrook = wking = rwrook = lbrook = bking = rbrook = 0
+    if square_status((0,0), anyboard) == False: lbrook = 1
+    if square_status((0,4), anyboard) == False: bking = 1
+    if square_status((0,7), anyboard) == False: rbrook = 1
+    if square_status((7,0), anyboard) == False: lwrook = 1
+    if square_status((7,4), anyboard) == False: wking = 1
+    if square_status((7,7), anyboard) == False: rwrook = 1
+    return[lwrook, wking, rwrook, lbrook, bking, rbrook]
+    
 def checkspecial():
     return False
 
@@ -326,10 +374,13 @@ def chess_game():
     turn = "White"
     #turn = "Black"
     turn_no = 1
-    #checkmate(cboard, turn)
+    castlestatus = [0, 0, 0, 0, 0, 0]
     while not checkmate(cboard, turn):
         while True:
             print(f"It is currently turn {turn_no}, {turn} to move.")
+            if sum(rookandkingtracker(cboard, turn_no)) >= sum(castlestatus):
+                castlestatus = rookandkingtracker(cboard, turn_no)
+            #print(sum(castlestatus))
             tempboard = deepcopy(cboard)
             if checkall(cboard, turn) == True:
                 print(f"Note that you are under check.")
@@ -340,6 +391,7 @@ def chess_game():
                     break
                 print("Please enter a valid move")
             #base placeholders below
+            #print("uptohere")
             startrank = 1
             startfile = "a"
             endrank = 1
@@ -356,28 +408,56 @@ def chess_game():
                 tempboard[8-endrank][ord(endfile)-97]=tempboard[8-startrank][ord(startfile)-97]
                 tempboard[8-startrank][ord(startfile)-97]=orboard[8-startrank][ord(startfile)-97]
                 #tempboard = True
+                stcord = (8-startrank, ord(startfile)-97)
+                endcord = (8-endrank, ord(endfile)-97)
+                if (is_valid(turn, stcord, endcord, capturestate, cboard) and (not checkall(tempboard, turn))):
+                    break
+                print("Please enter a legal move")
             elif len(Move) == 4:
+                #this for promotion
                 startrank = int(Move[2])
                 startfile = Move[1]
-            #piecename = Move[0]
-            stcord = (8-startrank, ord(startfile)-97)
-            endcord = (8-endrank, ord(endfile)-97)
-            if (is_valid(turn, stcord, endcord, capturestate, cboard) and (not checkall(tempboard, turn))):
-                break
-            print("Please enter a legal move")
+                if (isvalidpromotion(turn, Move, cboard)):
+                    break 
+                print("Please enter a legal promotion")
+            elif Move == "000" or Move == "00":
+                #print("herenow")
+                if isvalidcastle(turn, Move, cboard, castlestatus):
+                    break
+                print("Please enter a valid castling")
         #next block prints in words the move
-        print(f"{turn} {chesspieces[square_status(stcord, cboard)]['Type']} moves from {startfile}{startrank} to {endfile}{endrank}")
+        if len(Move) == 6 or len(Move) == 5:
+            print(f"{turn} {chesspieces[square_status(stcord, cboard)]['Type']} moves from {startfile}{startrank} to {endfile}{endrank}")
+            if capturestate == True:
+                print(f"and takes {turn} {chesspieces[square_status(endcord, cboard)]['Type']}")
+        if len(Move) == 4:
+            print(f"{turn} pawn on '{Move[1]}' file promotes to {piecenames[Move[-1]]}")
+        if Move == "000":
+            print(f"{turn} castles queenside")
+        if Move == "00":
+            print(f"{turn} castles kingside")
+        #need to replace start position with original board square
+        if len(Move) == 6 or len(Move) == 5:
+            cboard[8-endrank][ord(endfile)-97]=cboard[8-startrank][ord(startfile)-97]
+            cboard[8-startrank][ord(startfile)-97]=orboard[8-startrank][ord(startfile)-97]
+        #for promotion
+        elif len(Move) == 4:
+            if turn == "White":
+                cboard[8-startrank][ord(startfile)-97]=f"{whitepromotion[Move[-1]]}"
+        elif (Move == "000" or Move == "00") and turn == "White":
+            cboard[7][4] = orboard[7][4]
+            if Move == "000": cboard[7][2], cboard[7][3], cboard[7][0] = "♚", "♜", orboard[7][0]
+            else: cboard[7][6], cboard[7][5], cboard[7][7] = "♚", "♜", orboard[7][7]
+        elif (Move == "000" or Move == "00") and turn == "Black":
+            cboard[0][4] = orboard[0][4]
+            if Move == "000": cboard[0][2], cboard[0][3], cboard[0][0] = "♔", "♖", orboard[0][0]
+            else: cboard[0][6], cboard[0][5], cboard[0][7] = "♔", "♖", orboard[0][7]
+        
         if turn == "White":
             turn = "Black"
         else:
             turn = "White"
             turn_no += 1
-        if capturestate == True:
-            print(f"and takes {turn} {chesspieces[square_status(endcord, cboard)]['Type']}")
-        
-        #need to replace start position with original board square
-        cboard[8-endrank][ord(endfile)-97]=cboard[8-startrank][ord(startfile)-97]
-        cboard[8-startrank][ord(startfile)-97]=orboard[8-startrank][ord(startfile)-97]
         print("")
         print("The current state is below:")
         print_chessboard(cboard)
