@@ -23,10 +23,12 @@ def pieces():
         cboard[6][i]="♟︎"
     #cboard[6][5]="♙"
     #cboard[1][5]="♟︎"
-    cboard[6][5]="♕"
-    cboard[5][5]="♕"
-    
-    cboard[0][0]="♟︎"
+    #cboard[6][5]="♕"
+    #cboard[5][5]="♕"
+    #cboard[4][5]="♕"
+    #cboard[3][7]="♛"
+    #cboard[4][2]="♝"
+    #cboard[0][0]="♟︎"
     #print_chessboard(cboard)
     
     return cboard
@@ -272,13 +274,12 @@ def checkspecial():
 def checkmate(anyboard, turn):
     #print("startedthis")
     if checkall(anyboard, turn) == False:
-        print("allfine")
+        #print("allfine")
         return False
     
     #seeing if there is a valid move to avoid check by taking checking piece
     for x in coords: 
         (i,j) = (x[0], x[1])
-        #print(i,j)
         currentsquare = (i,j)
         #print(currentsquare)
         #print(square_status((i,j), anyboard))
@@ -295,9 +296,8 @@ def checkmate(anyboard, turn):
                     or (is_valid(turn, currentsquare, potentialmove, False, anyboard) == True):
                     #print("there is a valid move")
                     #need to initialise position to see if still under check
-                    cboard = pieces()
                     orboard=chessboard()
-                    ctempboard = deepcopy(cboard)
+                    ctempboard = deepcopy(anyboard)
                     ctempboard[m][n]=ctempboard[i][j]
                     ctempboard[i][j]=orboard[i][j]
                     #print_chessboard(ctempboard)
@@ -371,9 +371,10 @@ def chess_game():
             turn = "Black"
         else:
             turn = "White"
+            turn_no += 1
         if capturestate == True:
             print(f"and takes {turn} {chesspieces[square_status(endcord, cboard)]['Type']}")
-        turn_no += 1
+        
         #need to replace start position with original board square
         cboard[8-endrank][ord(endfile)-97]=cboard[8-startrank][ord(startfile)-97]
         cboard[8-startrank][ord(startfile)-97]=orboard[8-startrank][ord(startfile)-97]
